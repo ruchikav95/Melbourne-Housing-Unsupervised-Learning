@@ -20,8 +20,6 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn import metrics 
 
-import scikitplot as skplt
-
 # color maps
 from matplotlib import cm
 
@@ -35,6 +33,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import StandardScaler
 
 ! pip install scikit-plot
+import scikitplot as skplt
 
 """# Loading Data"""
 
@@ -80,4 +79,114 @@ df['CouncilArea'] = df.CouncilArea.fillna('Unavailable')
 df.dropna(subset=['Car'], inplace=True)
 
 df.groupby(['BuildingArea', 'Suburb'])['Suburb'].count()
+
+df.describe()
+
+#minimum price value is $85000 and maximum value is $9000000
+#removing outliers (top and bottom 1 percentiles) for price and property count 
+columns_list = ['Price','Propertycount']
+
+for i in columns_list:
+  print(i)
+  df = df[(df[i] < np.percentile(df[i],99.5)) & (df[i] > np.percentile(df[i], 1))]
+  print(df[i].describe())
+
+
+
+# df = df[(df['Price'] < np.percentile(df['Price'],99.5)) & (df['Price'] > np.percentile(df['Price'], 1))]
+
+df[df['Bathroom'] == 0].count()
+
+df[df['Bedroom2'] == 0].count()
+
+#removing observations with bathroom and bedroom values equal to 0
+df = df[(df['Bedroom2'] != 0) & (df['Bathroom'] != 0)]
+
+df.columns
+
+"""Exploratory Data Analysis """
+
+sns.countplot(df['Type'], palette="plasma")
+fig = plt.gcf()
+fig.set_size_inches(10,5)
+plt.title('Total Number of Listings per Apartment Type',fontsize = 20)
+plt.xlabel('Type of Housing',fontsize = 15)
+plt.ylabel('Number of Apartments',fontsize = 15)
+plt.tick_params(labelsize=10)
+
+plt.figure(figsize=(10,10))
+a = sns.scatterplot(data=df, x='Longtitude', y='Lattitude', hue='Type', palette='GnBu_d')
+plt.title('Map of Airbnb Listings by Neighborhood Group', fontsize=20)
+plt.xlabel('Lattitude',fontsize=12)
+plt.ylabel("Longtitude",fontsize=12)
+plt.legend(frameon=False, fontsize=13)
+plt.tick_params(labelsize=10)
+
+from folium import plugins
+from folium.plugins import HeatMap
+from folium.plugins import MarkerCluster
+
+my_heatmap = folium.Map(location=[37.8136,144.9631], zoom_start=8)
+
+heat_data = [[row['Lattitude'],row['Longtitude']] for index, row in df.iterrows()]
+
+# Plot it on the map
+HeatMap(heat_data).add_to(my_heatmap)
+
+# Display the map
+my_heatmap
+
+#MarkerCluster
+
+map2= folium.Map(location=[37.8136,144.9631], zoom_start=5, tiles='Stamen Terrain')
+
+marker_cluster = folium.plugins.MarkerCluster().add_to(map2)
+for index,row in df.iterrows():
+  lat = row["Lattitude"]
+  lon = row["Longtitude"]
+  name = row['Regionname']
+
+folium.Marker([lat,lon],popup=name).add_to(marker_cluster)
+map2
+
+plt.figure(figsize=(10,10))
+a = sns.scatterplot(data=df, x='Longtitude', y='Lattitude', hue='Type', palette='muted')
+plt.title('Map of Listing by Room Type', fontsize=20)
+plt.xlabel('Lattitude',fontsize=12)
+plt.ylabel("Longtitude",fontsize=12)
+plt.legend(frameon=False, fontsize=13)
+plt.tick_params(labelsize=10)
+
+
+plt.figure(figsize=(10,5))
+sns.countplot(data=df, x='Regionname', hue='Type', palette='GnBu_d')
+plt.title('Number of Listings in Regions by Room Type Category', fontsize=20)
+plt.xlabel('Neighbourhood group',fontsize=15)
+plt.ylabel("Count",fontsize=15)
+plt.legend(frameon=False, fontsize=10)
+plt.tick_params(labelsize=10)
+
+#using violinplot to showcase density and distribtuion of prices 
+plt.style.use('fivethirtyeight')
+plt.figure(figsize=(10,6))
+sns.boxplot(y="Price",x ='Type' ,data = df)
+plt.title("Price Distribution by Apartment Type")
+plt.xlabel('Neighbourhood Group',fontsize=15)
+plt.ylabel("Price",fontsize=15)
+plt.show()
+
+plt.figure(figsize=(12,6))
+plt.title("Top 20 Expensive Suburbs in Melbourne",fontsize = 20)
+sns.barplot(y="Suburb", x="Price",data= df.groupby('Suburb').agg({'Price': 'mean'}).sort_values('Price').reset_index().tail(20))
+plt.ioff()
+plt.xlabel('Price',fontsize=15)
+plt.ylabel("Neighbourhood",fontsize=15)
+plt.tick_params(labelsize=10)
+
+from wordcloud import WordCloud
+plt.subplots(figsize=(25,15))
+wordcloud = WordCloud(background_color='white', width=1920, height=1080).generate(" ".join(df.Suburb))
+plt.imshow(wordcloud)
+plt.axis('off')
+plt.show()
 
