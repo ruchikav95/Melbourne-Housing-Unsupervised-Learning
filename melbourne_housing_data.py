@@ -116,7 +116,7 @@ plt.tick_params(labelsize=10)
 
 plt.figure(figsize=(10,10))
 a = sns.scatterplot(data=df, x='Longtitude', y='Lattitude', hue='Type', palette='GnBu_d')
-plt.title('Map of Airbnb Listings by Neighborhood Group', fontsize=20)
+plt.title('Map of Listings by Apartment Type', fontsize=20)
 plt.xlabel('Lattitude',fontsize=12)
 plt.ylabel("Longtitude",fontsize=12)
 plt.legend(frameon=False, fontsize=13)
